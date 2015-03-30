@@ -1,8 +1,8 @@
 # Site wide configuration
 
-title:            Site Title
-locale:           en_US
-url:              
+title:            Peng LI's Blog
+locale:           zh_CN
+url:              /
 
 
 # Jekyll configuration
@@ -26,10 +26,10 @@ kramdown:
 
 # Site owner
 owner:
-  name: Your Name
+  name: Peng LI
   avatar: bio-photo.jpg
-  bio: "Describe your self."
-  email: 
+  bio: "Brave"
+  email: lipeng82@126.com
   disqus-shortname: 
   twitter: #username
   facebook: #username
