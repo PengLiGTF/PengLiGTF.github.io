@@ -269,6 +269,7 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
 
 情况五：
 ```java
+{% highlight java %}
     static boolean trueOrFlase(boolean flag)
     {
       while (true)
@@ -285,7 +286,7 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
       }
     }
   }
-```
+{% endhighlight %}
 在finally块中抛出异常，finally块异常结束，JVM不会执行”ret“指令，因finally中抛出异常，故程序会异常终止。
 
 
