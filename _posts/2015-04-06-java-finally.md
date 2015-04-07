@@ -33,7 +33,7 @@ fianlly块中的程序逻辑都将得到执行。
 处理逻辑放到finally块中进行，确保资源得到释放。如：
 
 
-{% highlight java linenos %} 
+{%  highlight java linenos %} 
 public class Test2 {
 
 }
@@ -41,7 +41,7 @@ public class Test2 {
 {% endhightlight %}
 
 流的关闭：
-{% highlight java %}
+{%  highlight java linenos %}
    InputStream in = null;
    try{
        in = new FileInputstream("/home/xxx.txt");
@@ -53,7 +53,7 @@ public class Test2 {
    }
 {% endhighlight %}
 锁的释放：
-{% highlight java %}
+{%  highlight java linenos %}
    try{
        lock.lock();   
    }finally{
@@ -64,7 +64,7 @@ public class Test2 {
 既然java虚拟机（JVM）给出保证一定执行在try块后面的finally块，那么问题来了，在下面的情况中程序会怎样执行呢？
 
 情况一：
-{% highlight java %}
+{%  highlight java linenos %}
     static int test()
   {
     int i = 10;
@@ -78,7 +78,7 @@ public class Test2 {
   }
 {% endhighlight %}
 情况二：
-{% highlight java %}
+{%  highlight java linenos %}
     static int test()
   {
     int i = 10;
@@ -93,7 +93,7 @@ public class Test2 {
   }
 {% endhighlight %}
 情况三：
-{% highlight java %}
+{%  highlight java linenos %}
     static boolean trueOrFlase(boolean flag)
     {
     while(true)
@@ -110,7 +110,7 @@ public class Test2 {
   }
 {% endhighlight %}
 情况四：
-{% highlight java %}
+{%  highlight java linenos %}
     static int test()
     {
     int i = 0;
@@ -139,7 +139,7 @@ public class Test2 {
 {% endhighlight %}
 情况五：
 
-{% highlight java %}
+{%  highlight java linenos %}
     static boolean trueOrFlase(boolean flag)
     {
     while (true)
@@ -189,7 +189,7 @@ finally块是正常结束。
 
 好了，现在让我们回答上面提到的几种情况程序会有什么样的输出：
 情况一：
-{% highlight java %}
+{%  highlight java linenos %}
     static int test()
     {
     int i = 10;
@@ -207,7 +207,7 @@ fianlly块是正常结束，JVM在执行到finally时，先将第6行的指令�
 程序返回10
 
 在来看情况二：
-{% highlight java %}
+{%  highlight java linenos %}
     static int test()
     {
     int i = 10;
@@ -225,7 +225,7 @@ finally块中有return语句，属于异常结束，JVM将不会执行”ret“�
 故程序直接执行finally块中的返回操作，所以程序返回200.
 
 而在情况三：
-{% highlight java %}
+{%  highlight java linenos %}
     static boolean trueOrFlase(boolean flag)
     {
       while(true)
@@ -245,7 +245,7 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
 对应的指令，所以程序返回false而不论参数为何。
 
 情况四：
-{% highlight java %}
+{%  highlight java linenos %}
     static int test()
     {
       int i = 0;
@@ -277,7 +277,7 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
 
 情况五：
 
-{% highlight java %}
+{%  highlight java linenos %}
     static boolean trueOrFlase(boolean flag)
     {
       while (true)
@@ -329,10 +329,10 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
 
 
 ##关于作者
-{% highlight java %}
+{%  highlight java linenos %}
 public static void main
 {% endhighlight %}
-{% highlight java %}script
+{%  highlight java linenos %}script
   var ihubo = {
     nickName  : "Peng LI",
     site : "http://pengligtf.github.io"
