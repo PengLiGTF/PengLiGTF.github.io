@@ -32,6 +32,14 @@ fianlly块中的程序逻辑都将得到执行。
 以前的版本进行java程序编写时，当程序中有涉及到资源（如流）释放操作时，程序员往往被要求一定将资源释放的
 处理逻辑放到finally块中进行，确保资源得到释放。如：
 
+
+{% highlight java linenos %} 
+public class Test2 {
+
+}
+
+{% endhightlight %}
+
 流的关闭：
 {% highlight java %}
    InputStream in = null;
