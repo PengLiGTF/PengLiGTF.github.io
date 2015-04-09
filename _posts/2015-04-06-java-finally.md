@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Java finally block
-excerpt: "深入理解Java finally机制"
+excerpt: "从字节码层面深入理解Java finally机制"
 modified: 2015-054-06
 tags: [java, try, finally, jvm]
 comments: true
@@ -21,18 +21,15 @@ image:
 </div>
 </section><!-- /#table-of-contents -->
 
-##finally语句块
+##概要
+当下，很多程序员对java finally的了解来自网上的一些面试题目，对其机制的了解仅仅停留在简单的概念层面上，稍微换个方式提问就“死机”了。
+本文将从JVM底层机制结合字节码的方式分析研究java finally的运行机制，彻底掌握其运行机制。
 
-在java中，finally必须结合try语句块或try{}catch(e)语句块一起使用，用法有try{......}finally{......}
-和try{......}catch(e){}finally{......}两种用法。根据java 8语言规范14.20 "try statement"章节中的描述，
-当try语句块后面有跟一个finally语句块时，不管当前的try块和所有的catch块（如果有）是否正常或异常结束，
-fianlly块中的程序逻辑都将得到执行。
+##finally作用和常用表现形式
 
-为此，在使用jdk7（jdk7+中的try-with-resources会对实现了java.lang.AutoCloseable接口的资源进行自动关闭）
-以前的版本进行java程序编写时，当程序中有涉及到资源（如流）释放操作时，程序员往往被要求一定将资源释放的
-处理逻辑放到finally块中进行，确保资源得到释放。如：
-
-
+根据java language specification中描述：当try语句块后面有跟一个finally语句块时，
+不管当前的try块和所有的catch块（如果有）是否正常或异常结束，fianlly块中的程序逻辑都将得到执行。这就能够确保放在finally块中的资源
+释放逻辑得到执行，避免了因资源忘记释放而导致程序BUG的可能。常见的在finally块中进行资源释放的处理逻辑有：
 
 流的关闭：
 {%  highlight java linenos %}
@@ -54,8 +51,35 @@ fianlly块中的程序逻辑都将得到执行。
        lock.unlock();
    }
 {% endhighlight %}
-由于finally块最后一定被执行，因此将资源的释放操作放在finally块中无疑是安全的做法，可以减少犯错的可能，
-既然java虚拟机（JVM）给出保证一定执行在try块后面的finally块，那么问题来了，在下面的情况中程序会怎样执行呢？
+
+在java中，finally必须结合try语句块或try{}catch(e)语句块一起使用，常用方式有：
+{% highlight java linenos %}
+    try{
+      //do something
+  }finally{
+    //do something
+  }
+
+{% endhighlight %}
+和：
+{% highlight java linenos %}
+
+      try{
+      //do something
+    }catch(Exception e){
+      //do something
+    }
+    finally{
+      //do something
+    }
+{% endhighlight %}
+
+在jdk7+中，由于引入了“try-with-resources”机制，finally块在某些情况下可以不再需要（jdk7+中的try-with-resources会对实现了java.lang.AutoCloseable接口的资源进行自动关闭）。
+但是，这不能成为我们不对finally运行机制理解的理由。
+
+##问题
+
+既然java虚拟机（JVM）给出保证一定执行在try块后面的finally块，且在finally中可以有任何符合java语法的java代码，那么问题来了，在下面的情况中程序会怎样执行呢？
 
 情况一：
 {%  highlight java linenos %}
@@ -88,8 +112,8 @@ fianlly块中的程序逻辑都将得到执行。
 {% endhighlight %}
 情况三：
 {%  highlight java linenos %}
-    static boolean trueOrFlase(boolean flag)
-    {
+  static boolean trueOrFlase(boolean flag)
+  {
     while(true)
     {
       try{
@@ -105,8 +129,8 @@ fianlly块中的程序逻辑都将得到执行。
 {% endhighlight %}
 情况四：
 {%  highlight java linenos %}
-    static int test()
-    {
+  static int test()
+  {
     int i = 0;
     while (true)
     {
@@ -134,8 +158,8 @@ fianlly块中的程序逻辑都将得到执行。
 情况五：
 
 {%  highlight java linenos %}
-    static boolean trueOrFlase(boolean flag)
-    {
+  static boolean trueOrFlase(boolean flag)
+  {
     while (true)
     {
       try
@@ -152,28 +176,36 @@ fianlly块中的程序逻辑都将得到执行。
   }
 {% endhighlight %}
 
-差不多了，先列出这五种情况，当下很多面试题中都有出现类似的题目，不要着急上机测试，先想想，科学证实 ,
-人类对大脑的实际使用率只是10%左右，还有很多潜能没被开发出来，看了几期的“最强大脑”，我个人觉得
-大家对大脑的使用率估计不到10%，你怎么看？
+差不多了，先列出这五种情况，当下很多面试题中都有出现类似的题目，如果你能很快得出正确的答案，表明你已经理解了finally的运行机制，如果你还犹豫，那就一起再研究研究。
+如果你直接copy代码去机上运行快速地得出结论，表明你是个快枪手。要知道：机上得来终觉浅，绝知此事要躬行。
 
-但是，坊间又有说法了，说可能存在的超级厉害的远古人类之所以消失了就是因为他们对大脑开发过度，所以现在大家
-可以时不时的听到当下一些比较厉害的人Duang~的一下就挂了的新闻事件。然，知识诚可贵，小命价更高。想不出来还
-是去上机吧，目的达到即可。
+##分析探讨
 
-
-然，机上得来终觉浅，绝知此事要躬行。
-
-首先这里有一个概念需要知道，finally块的正常结束和异常结束，先说异常结束，java规范中指出，如果在finally块中
+首先这里有两个重要的概念需要知道，finally块的正常结束和异常结束，先说异常结束，java规范中指出，如果在finally块中
 有诸如：break,continue,return或是抛出异常的情况，则表明这个finally块属于异常结束一类的情况。反之，则表示该
 finally块是正常结束。
 
+
+
+简单来说，当JVM执行带有finally块的try块时，在执行完try块准备执行finally块之前，先将try块中的返回值（如果有）存放到栈中局部变量区中，然后执行finally块，
+*如果finally块正常结束，则从局部变量区中取出之前存放的值进行返回或者是覆盖掉之前存放的值，继续执行finally块后面的语句。
+*如果finally块异常结束:
+   *如果因为finally块中包含了return语句,则，jvm会直接从finally块中进行返回，而会抛弃掉之前在try块中存放到局部变量区中的值。
+   *如果因为finally块中包含了break语句,则JVM会跳出finally块所属的循坏块，继续执行循坏块后续的语句，放弃try块中的返回操作（如果有）
+   *如果因为finally块中包含了break语句包含了continue语句,则JVM会放弃try块中的返回操作，继续进行循坏操作，这种情况下有可能导致死循坏。
+   *如果因为finally块中因为抛出异常，则真个程序会异常终止。
+
+更专业的（来自Inside into Java virtual machine)阐述如下：
+
 在带有finally语句块的try语句块生成的java字节码中，方法中的finally块的表现为一个“微型子例程”（miniature subroutines），
-并有一条相应的指令（jsr或jsr_w(jdk7以下版本中有，我用的是jdk8,生成的字节码中没有这个指令)）与之对应，当JVM在执行到
-该指令时（表示方法正准备进入到finally块），它会将“return adddress”存放到局部变量栈中，然后JVM跳转到“微型子例程”开始处继续执行。
-注意这里的”return address“（偏移量或本地指针）指的是紧跟着 jsr或jsr_w操作码和其操作数 之后的字节码的地址，其类型
-为 ”returnAddress“。
+并有一条相应的指令（jsr或jsr_w(jdk5以下版本中有)）与之对应，当JVM在执行到该jsr或jsr_w指令时，它会先将“return adddress”存放到局部变量栈中，然后JVM跳转到“微型子例程”
+也即是finally块开始处继续执行。
+
+注意这里的”return address“（偏移量或本地指针）指的是紧跟着 jsr或jsr_w操作码和其操作数 之后的字节码的地址，其类型为 ”returnAddress“。
+
 在正常执行完finally语句块（微型子例程）后，JVM执行从”微型子例程序“中返回的'ret'指令，这个ret指令包含一个”index“操作数，"index"表示执行
-这个“微型子例程“之前存储在局部变量栈中的”return address“的存放位置。执行完"ret"指令之后，jvm跳转到”jsr或jsr_w“之后的指令处继续执行。
+这个“微型子例程“之前存储在局部变量栈中的”return address“的存放位置。执行完"ret"指令之后，jvm跳转到”jsr或jsr_w“之后的指令处（也即之前保存的“return address”表示的指令）继续执行。
+
 注意这里的“ret"要和方法的返回区别开来，在字节码中，这里的“返回”对应的操作指令为“ret”，作用仅仅是用于在“微型子例程”
 正常结束之后跳转到方法内部开始执行“微型子例程”的指令的下一个指令所处的位置。而上面提到了，存放到局部变量的”return address“表示的是”紧跟着 jsr或jsr_w操作码和其操作数 之后的字节码的地址“，
 所以执行完”ret“指令之后接着就会执行jsr或jsr_w操作码和其操作数 之后的字节码的地址所表示的指令。
@@ -181,7 +213,9 @@ finally块是正常结束。
 而在”微型子例程“异常结束时，将不会执行”ret“，也即JVM不会返回到执行”微型子例程“的开始处执行，而是直接走finally后面的代码块逻辑。
 
 
-好了，现在让我们回答上面提到的几种情况程序会有什么样的输出：
+##答题
+
+了解了finally的运行机制之后，现在让我们回答上面提到的几种情况程序会有什么样的输出：
 情况一：
 {%  highlight java linenos %}
     static int test()
@@ -192,12 +226,41 @@ finally块是正常结束。
       return i;
     } finally
     {
+      System.out.println("this is finally");
       i = 100;
     }
   }
+  
+  字节码：
+     static int test();
+    Code:
+       0: bipush        10
+       2: istore_0
+       3: iload_0
+       4: istore_1
+       5: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+       8: ldc           #3                  // String this is finally
+      10: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      13: bipush        100
+      15: istore_0
+      16: iload_1
+      17: ireturn
+      18: astore_2
+      19: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      22: ldc           #3                  // String this is finally
+      24: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      27: bipush        100
+      29: istore_0
+      30: aload_2
+      31: athrow
+    Exception table:
+       from    to  target type
+           3     5    18   any
+
+  
 {% endhighlight %}
-fianlly块是正常结束，JVM在执行到finally时，先将第6行的指令地址放到局部变量中进行了存储，执行完第9行中的指令之后，从
-局部变量栈中取出之前存放的地址，然后jvm继续执行这条指令：return i,之前存放时i的值是10,所以取出来后仍然为10，所以
+fianlly块是正常结束，JVM在执行到finally时（见上字节码），在第4行（4：）将要返回的值放到局部变量区中的第一个位置进行了存储，finally块执行完成之后，从
+局部变量区中的第一个位置取出之前存放的地址（16：），然后jvm继续执行这条指令：ireturn(17：)完成返回操作,之前存放时i的值是10,所以取出来后仍然为10，所以
 程序返回10
 
 在来看情况二：
@@ -215,7 +278,7 @@ fianlly块是正常结束，JVM在执行到finally时，先将第6行的指令�
     }
   }
 {% endhighlight %}
-finally块中有return语句，属于异常结束，JVM将不会执行”ret“指令，不会执行第6行的 return i,因为finally中有返回操作，
+finally块中有return语句，属于异常结束，JVM将不会执行”ret“指令，不会执行 return i,因为finally中有返回操作，
 故程序直接执行finally块中的返回操作，所以程序返回200.
 
 而在情况三：
