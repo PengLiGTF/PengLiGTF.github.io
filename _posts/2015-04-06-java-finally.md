@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Java finally block
-excerpt: "Just about everything you'll need to style in the theme: headings, paragraphs, blockquotes, tables, code blocks, and more."
+excerpt: "深入理解Java finally机制"
 modified: 2015-054-06
 tags: [java, try, finally, jvm]
 comments: true
@@ -21,7 +21,7 @@ image:
 </div>
 </section><!-- /#table-of-contents -->
 
-##finally语句块kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk
+##finally语句块
 
 在java中，finally必须结合try语句块或try{}catch(e)语句块一起使用，用法有try{......}finally{......}
 和try{......}catch(e){}finally{......}两种用法。根据java 8语言规范14.20 "try statement"章节中的描述，
@@ -33,12 +33,6 @@ fianlly块中的程序逻辑都将得到执行。
 处理逻辑放到finally块中进行，确保资源得到释放。如：
 
 
-{%  highlight java linenos %} 
-public class Test2 {
-
-}
-
-{% endhightlight %}
 
 流的关闭：
 {%  highlight java linenos %}
