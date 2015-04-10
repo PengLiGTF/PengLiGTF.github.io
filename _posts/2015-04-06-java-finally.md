@@ -188,6 +188,7 @@ finally块是正常结束。
 
 
 简单来说，当JVM执行带有finally块的try块时，在执行完try块准备执行finally块之前，先将try块中的返回值（如果有）存放到栈中局部变量区中，然后执行finally块，
+
 *如果finally块正常结束，则从局部变量区中取出之前存放的值进行返回或者是覆盖掉之前存放的值，继续执行finally块后面的语句。
 *如果finally块异常结束:
    *如果因为finally块中包含了return语句,则，jvm会直接从finally块中进行返回，而会抛弃掉之前在try块中存放到局部变量区中的值。
@@ -245,6 +246,7 @@ finally块是正常结束。
       15: istore_0
       16: iload_1
       17: ireturn
+      //jvm为执行try块中发生异常时的异常处理
       18: astore_2
       19: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
       22: ldc           #3                  // String this is finally
@@ -285,14 +287,15 @@ finall块中的逻辑，执行完输出语句后，将100压入栈中，随即�
        0: bipush        10
        2: istore_0
        3: iload_0
-       **4: istore_1**
+       4: istore_1     //将待返回的值存放到局部变量区中的第一个位置
        5: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
        8: ldc           #3                  // String this is finally
       10: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
       13: bipush        100
       15: istore_0
-      **16: sipush        200**
-      **19: ireturn**
+      16: sipush        200       //将200压入栈
+      19: ireturn                 //紧接着执行返回操作将200作为方法的返回
+      //jvm为执行try块中发生异常时的异常处理
       20: astore_2
       21: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
       24: ldc           #3                  // String this is finally
@@ -325,9 +328,26 @@ finally块中有return语句，属于异常结束，JVM将不会执行try块中�
     }
     return false;
   }
+  字节码：
+  static boolean trueOrFlase(boolean);
+    Code:
+       0: iload_0
+       1: ifeq          9
+       4: iconst_1
+       5: istore_1
+       6: goto          16
+       9: goto          16
+       
+      12: astore_2
+      13: goto          16
+      16: iconst_0     //将0压人栈 jvm中boolean类型用0表示false,大于0的整数表示true
+      17: ireturn      //直接返回栈顶元素0
+    Exception table:
+       from    to  target type
+           0     6    12   any
+
 {% endhighlight %}
-finally块中存在有break语句，finally块也是异常结束，同理，JVM也不会执行”ret“指令，而是直接跳出循环体执行 return false
-对应的指令，所以程序返回false而不论参数为何。
+finally块中存在有break语句，finally块是异常结束，JVM也不会执行try块中的return指令，而是直接跳出循环体执行”return false“对应的指令，所以程序返回false而不论参数为何。
 
 情况四：
 {%  highlight java linenos %}
@@ -343,12 +363,14 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
           i = 1;
         } finally
         {
+          System.out.println("this is inner finally block");
           i = 2;
         }
         i = 3;
         return i;
       } finally
       {
+        System.out.println("this is outter finally block");
         if (i == 3)
         {
           continue;
@@ -356,9 +378,58 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
       }
     }
   }
+  字节码：
+  static int test();
+    Code:
+       0: iconst_0
+       1: istore_0
+       2: iconst_1
+       3: istore_0
+       4: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+       7: ldc           #3                  // String this is inner finally block
+       9: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      12: iconst_2
+      13: istore_0       //第一个finally块正常结束，会覆盖掉try块中存放在局部变量区中的值
+      14: goto          30
+      17: astore_1
+      18: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      21: ldc           #3                  // String this is inner finally block
+      23: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      26: iconst_2
+      27: istore_0
+      28: aload_1
+      29: athrow
+      30: iconst_3            //将3压入栈
+      31: istore_0            //将3存放到局部变量区中的第0个位置，覆盖掉原来的值2
+      32: iload_0
+      33: istore_1            //将3存放到局部变量区中的第1个位置
+      34: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      37: ldc           #5                  // String this is outter finally block
+      39: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      42: iload_0
+      43: iconst_3
+      44: if_icmpne     50  //执行if判断
+      47: goto          2   //if判断条件为ture，跳转到第二行指令处执行
+      50: iload_1           //if判断条件为false，取出之前存放到局部变量区位置为1的变量
+      51: ireturn           //执行返回
+      52: astore_2
+      53: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      56: ldc           #5                  // String this is outter finally block
+      58: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      61: iload_0
+      62: iconst_3
+      63: if_icmpne     69
+      66: goto          2
+      69: aload_2
+      70: athrow
+    Exception table:
+       from    to  target type
+           2     4    17   any
+           2    34    52   any
+
 {% endhighlight %}
-代码原指望循环3此之后退出循环体程序返回3，但是，finally块中有continue语句，fianlly异常结束，JVM也将不执行”ret“指令，
-而会继续循环体，导致出现死循环。
+代码原指望循环3此之后退出循环体程序返回3，但是，finally块中有continue语句，fianlly异常结束，JVM也将不执行try块中的return指令，
+而会继续循环体，在本例中将导致出现死循环。
 
 情况五：
 
@@ -375,13 +446,52 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
         }
       } finally
       {
+        System.out.println("this is finally block");
         throw new RuntimeException("");
       }
     }
   }
+  字节码：
+   static boolean trueOrFlase(boolean);
+    Code:
+       0: iload_0
+       1: ifeq          24
+       4: iconst_1
+       5: istore_1
+       6: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+       9: ldc           #6                  // String this is finally block
+      11: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      14: new           #7                  // class java/lang/RuntimeException
+      17: dup
+      18: ldc           #8                  // String
+      20: invokespecial #9                  // Method java/lang/RuntimeException."<init>":(Ljava/lang/String;)V
+      23: athrow                   //抛出异常
+      24: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      27: ldc           #6                  // String this is finally block
+      29: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      32: new           #7                  // class java/lang/RuntimeException
+      35: dup
+      36: ldc           #8                  // String
+      38: invokespecial #9                  // Method java/lang/RuntimeException."<init>":(Ljava/lang/String;)V
+      41: athrow
+      //jvm为执行try块中发生异常时的异常处理
+      42: astore_2
+      43: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      46: ldc           #6                  // String this is finally block
+      48: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      51: new           #7                  // class java/lang/RuntimeException
+      54: dup
+      55: ldc           #8                  // String
+      57: invokespecial #9                  // Method java/lang/RuntimeException."<init>":(Ljava/lang/String;)V
+      60: athrow
+    Exception table:
+       from    to  target type
+           0     6    42   any
+
+  
 {% endhighlight %}
 
-在finally块中抛出异常，finally块异常结束，JVM不会执行”ret“指令，因finally中抛出异常，故程序会异常终止。
+在finally块中抛出异常，finally块异常结束，JVM不会执行try语句块中的return指令，因finally中抛出异常，故程序会异常终止。
 
 
 
@@ -407,7 +517,6 @@ finally块中存在有break语句，finally块也是异常结束，同理，JVM�
 
 
 ##参考
-感谢以下的项目,排名不分先后
 
 * [Inside the Java virtual machine]()
 * [Java Language Specification]()
@@ -426,6 +535,31 @@ public static void main
 
 
 
+## Code Snippets
 
+{% highlight css %}
+#container {
+  float: left;
+  margin: 0 -240px 0 0;
+  width: 100%;
+}
+{% endhighlight %}
 
+## Buttons
 
+Make any link standout more when applying the `.btn` class.
+
+{% highlight html %}
+<a href="#" class="btn btn-success">Success Button</a>
+{% endhighlight %}
+
+<div markdown="0"><a href="#" class="btn">Primary Button</a></div>
+<div markdown="0"><a href="#" class="btn btn-success">Success Button</a></div>
+<div markdown="0"><a href="#" class="btn btn-warning">Warning Button</a></div>
+<div markdown="0"><a href="#" class="btn btn-danger">Danger Button</a></div>
+<div markdown="0"><a href="#" class="btn btn-info">Info Button</a></div>
+
+## Notices
+
+**Watch out!** You can also add notices by appending `{: .notice}` to a paragraph.
+{: .notice}
