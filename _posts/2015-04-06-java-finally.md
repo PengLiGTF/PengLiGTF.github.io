@@ -1,9 +1,9 @@
 ---
 layout: post
 title: Java finally block
-excerpt: "从字节码层面深入理解Java finally机制"
+excerpt: "结合实例从字节码层面深入理解Java finally机制"
 modified: 2015-054-06
-tags: [java, try, finally, jvm]
+tags: [java, try, finally, jvm, 面试]
 comments: true
 image:
   feature: sample-image-5.jpg
@@ -21,7 +21,7 @@ image:
 </div>
 </section><!-- /#table-of-contents -->
 
-##概要
+##概述
 当下，很多程序员对java finally的了解来自网上的一些面试题目，对其机制的了解仅仅停留在简单的概念层面上，稍微换个方式提问就“死机”了。
 本文将从JVM底层机制结合字节码的方式分析研究java finally的运行机制，彻底掌握其运行机制。
 
@@ -213,7 +213,7 @@ finally块是正常结束。
 而在”微型子例程“异常结束时，将不会执行”ret“，也即JVM不会返回到执行”微型子例程“的开始处执行，而是直接走finally后面的代码块逻辑。
 
 
-##答题
+##实例解析
 
 了解了finally的运行机制之后，现在让我们回答上面提到的几种情况程序会有什么样的输出：
 情况一：
@@ -259,11 +259,12 @@ finally块是正常结束。
 
   
 {% endhighlight %}
-fianlly块是正常结束，JVM在执行到finally时（见上字节码），在第4行（4：）将要返回的值放到局部变量区中的第一个位置进行了存储，finally块执行完成之后，从
-局部变量区中的第一个位置取出之前存放的地址（16：），然后jvm继续执行这条指令：ireturn(17：)完成返回操作,之前存放时i的值是10,所以取出来后仍然为10，所以
+因为fianlly块是正常结束，JVM在执行到finally时（见上字节码），在第4行（4： istore_1）将要返回的值放到局部变量区中的第一个位置进行了存储，然后执行
+finall块中的逻辑，执行完输出语句后，将100压入栈中，随即弹出栈存放到局部变量区中的第0个位置，至此finally块执行完成，finally块执行完成之后，从
+局部变量区中的第一个位置取出之前存放的地址（16: iload_1），然后jvm继续执行这条指令：ireturn(17：)完成返回操作,而之前存放时i的值是10,所以取出来后仍然为10，所以
 程序返回10
 
-在来看情况二：
+再来看情况二：
 {%  highlight java linenos %}
     static int test()
     {
@@ -273,13 +274,40 @@ fianlly块是正常结束，JVM在执行到finally时（见上字节码），在
       return i;
     } finally
     {
+      System.out.println("this is finally");
       i = 100;
       return 200;
     }
   }
+  字节码：
+   static int test();
+    Code:
+       0: bipush        10
+       2: istore_0
+       3: iload_0
+       **4: istore_1**
+       5: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+       8: ldc           #3                  // String this is finally
+      10: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      13: bipush        100
+      15: istore_0
+      **16: sipush        200**
+      **19: ireturn**
+      20: astore_2
+      21: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      24: ldc           #3                  // String this is finally
+      26: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      29: bipush        100
+      31: istore_0
+      32: sipush        200
+      35: ireturn
+    Exception table:
+       from    to  target type
+           3     5    20   any
+
+  
 {% endhighlight %}
-finally块中有return语句，属于异常结束，JVM将不会执行”ret“指令，不会执行 return i,因为finally中有返回操作，
-故程序直接执行finally块中的返回操作，所以程序返回200.
+finally块中有return语句，属于异常结束，JVM将不会执行try块中的return语句,因为finally中有返回操作，故程序直接执行finally块中的返回操作，所以程序返回200.
 
 而在情况三：
 {%  highlight java linenos %}
@@ -398,31 +426,6 @@ public static void main
 
 
 
-## Code Snippets
 
-{% highlight css %}
-#container {
-  float: left;
-  margin: 0 -240px 0 0;
-  width: 100%;
-}
-{% endhighlight %}
 
-## Buttons
 
-Make any link standout more when applying the `.btn` class.
-
-{% highlight html %}
-<a href="#" class="btn btn-success">Success Button</a>
-{% endhighlight %}
-
-<div markdown="0"><a href="#" class="btn">Primary Button</a></div>
-<div markdown="0"><a href="#" class="btn btn-success">Success Button</a></div>
-<div markdown="0"><a href="#" class="btn btn-warning">Warning Button</a></div>
-<div markdown="0"><a href="#" class="btn btn-danger">Danger Button</a></div>
-<div markdown="0"><a href="#" class="btn btn-info">Info Button</a></div>
-
-## Notices
-
-**Watch out!** You can also add notices by appending `{: .notice}` to a paragraph.
-{: .notice}
