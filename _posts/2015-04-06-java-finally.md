@@ -189,12 +189,12 @@ finally块是正常结束。
 
 简单来说，当JVM执行带有finally块的try块时，在执行完try块准备执行finally块之前，先将try块中的返回值（如果有）存放到栈中局部变量区中，然后执行finally块，
 
-*如果finally块正常结束，则从局部变量区中取出之前存放的值进行返回或者是覆盖掉之前存放的值，继续执行finally块后面的语句。
-*如果finally块异常结束:
-   *如果因为finally块中包含了return语句,则，jvm会直接从finally块中进行返回，而会抛弃掉之前在try块中存放到局部变量区中的值。
-   *如果因为finally块中包含了break语句,则JVM会跳出finally块所属的循坏块，继续执行循坏块后续的语句，放弃try块中的返回操作（如果有）
-   *如果因为finally块中包含了break语句包含了continue语句,则JVM会放弃try块中的返回操作，继续进行循坏操作，这种情况下有可能导致死循坏。
-   *如果因为finally块中因为抛出异常，则真个程序会异常终止。
+* 如果finally块正常结束，则从局部变量区中取出之前存放的值进行返回或者是覆盖掉之前存放的值，继续执行finally块后面的语句。
+* 如果finally块异常结束:
+   * 如果因为finally块中包含了return语句,则，jvm会直接从finally块中进行返回，而会抛弃掉之前在try块中存放到局部变量区中的值。
+   * 如果因为finally块中包含了break语句,则JVM会跳出finally块所属的循坏块，继续执行循坏块后续的语句，放弃try块中的返回操作（如果有）
+   * 如果因为finally块中包含了break语句包含了continue语句,则JVM会放弃try块中的返回操作，继续进行循坏操作，这种情况下有可能导致死循坏。
+   * 如果因为finally块中因为抛出异常，则真个程序会异常终止。
 
 更专业的（来自Inside into Java virtual machine)阐述如下：
 
