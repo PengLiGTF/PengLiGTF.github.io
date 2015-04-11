@@ -1,8 +1,8 @@
 ---
 layout: post
 title: Java finally block
-excerpt: "结合实例从字节码层面深入理解Java finally机制"
-modified: 2015-054-06
+excerpt: "java finally block,结合实例从字节码层面深入理解Java finally机制"
+modified: 2015-04-06
 tags: [java, try, finally, jvm, 面试]
 comments: true
 image:
