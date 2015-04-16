@@ -3,7 +3,7 @@ layout: post
 title: Java finally block 原理,结合实例从字节码层面深入理解Java finally机制
 excerpt: "java finally block实现原理探究,结合实例从字节码层面深入理解Java finally机制"
 modified: 2015-04-06
-tags: [java, try, finally, jvm, 面试]
+tags: [java, try, finally, jvm, 面试, 原理, 机制,字节码,实例]
 comments: true
 image:
   feature: sample-image-5.jpg
